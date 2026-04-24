@@ -10,6 +10,8 @@
   <style>
     :root {
       --bg: #0d0d0d;
+      --bg-red: #170808;
+      --bg-green: #07170f;
       --card: #151515;
       --card-edge: #262626;
       --text: #ffffff;
@@ -28,15 +30,27 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background:
-        radial-gradient(circle at 20% 15%, rgba(204, 0, 0, 0.18), transparent 45%),
-        radial-gradient(circle at 80% 85%, rgba(204, 0, 0, 0.12), transparent 50%),
-        var(--bg);
+      background-color: var(--bg);
       color: var(--text);
       font-family: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
       display: grid;
       place-items: center;
       padding: 1.2rem;
+      transition: background-color 280ms ease;
+    }
+
+    body.paused-theme {
+      background:
+        radial-gradient(circle at 18% 12%, rgba(204, 0, 0, 0.28), transparent 44%),
+        radial-gradient(circle at 85% 90%, rgba(128, 20, 20, 0.18), transparent 50%),
+        var(--bg-red);
+    }
+
+    body.playing-theme {
+      background:
+        radial-gradient(circle at 16% 14%, rgba(18, 151, 81, 0.27), transparent 44%),
+        radial-gradient(circle at 84% 88%, rgba(15, 95, 56, 0.16), transparent 50%),
+        var(--bg-green);
     }
 
     .app {
@@ -198,26 +212,15 @@
     .equalizer span {
       width: 6px;
       border-radius: 999px;
-      background: linear-gradient(180deg, #ff5050 0%, #cc0000 100%);
+      background: linear-gradient(180deg, #ff5e5e 0%, #cc0000 100%);
       height: 8px;
       opacity: 0.45;
       transform-origin: bottom center;
+      transition: height 90ms linear, opacity 90ms linear;
     }
 
     .equalizer.listening span {
-      animation: pulse 750ms ease-in-out infinite;
-    }
-
-    .equalizer span:nth-child(2) { animation-delay: 90ms; }
-    .equalizer span:nth-child(3) { animation-delay: 180ms; }
-    .equalizer span:nth-child(4) { animation-delay: 270ms; }
-    .equalizer span:nth-child(5) { animation-delay: 360ms; }
-    .equalizer span:nth-child(6) { animation-delay: 450ms; }
-
-    @keyframes pulse {
-      0%, 100% { height: 7px; opacity: 0.45; }
-      40% { height: 26px; opacity: 0.95; }
-      70% { height: 16px; opacity: 0.75; }
+      opacity: 0.85;
     }
 
     .slider-group {
@@ -281,26 +284,6 @@
       transform: scale(0.98);
     }
 
-    .event-log {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.25);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      min-height: 122px;
-      padding: 0.7rem 0.8rem;
-      font-size: 0.84rem;
-      line-height: 1.45;
-      color: #ebebeb;
-      display: grid;
-      align-content: start;
-      gap: 0.34rem;
-    }
-
-    .event-log .empty {
-      color: #a2a2a2;
-      font-style: italic;
-    }
-
     .footnote,
     .legal {
       margin: 0;
@@ -332,6 +315,9 @@
 <body>
   <main class="app">
     <h1 class="logo">FETCHFLIX <span class="paw" aria-hidden="true">🐾</span></h1>
+    <p class="footnote">
+      FetchFlix listens for your dog's bark using your device microphone. Bark to pause. Bark again to play.
+    </p>
 
     <section class="mic-gate" id="micGate">
       <p>Enable microphone access to let FetchFlix detect barks and toggle play/pause.</p>
@@ -362,13 +348,6 @@
       </div>
     </section>
 
-    <section class="event-log" id="eventLog" aria-live="polite">
-      <div class="empty">No bark events yet.</div>
-    </section>
-
-    <p class="footnote">
-      FetchFlix listens for your dog's bark using your device microphone. Bark to pause. Bark again to play.
-    </p>
     <p class="legal">
       MVP demo — bark detection uses volume threshold via Web Audio API. No audio is recorded or transmitted.
     </p>
@@ -385,8 +364,7 @@
       equalizer: document.getElementById("equalizer"),
       listeningLabel: document.getElementById("listeningLabel"),
       sensitivity: document.getElementById("sensitivity"),
-      sensitivityValue: document.getElementById("sensitivityValue"),
-      eventLog: document.getElementById("eventLog")
+      sensitivityValue: document.getElementById("sensitivityValue")
     };
 
     let isPlaying = false;
@@ -398,8 +376,7 @@
     let lastDetection = 0;
     let threshold = sliderToThreshold(Number(ui.sensitivity.value));
     const detectionCooldownMs = 800;
-    const maxLogLines = 5;
-    const eventLines = [];
+    const equalizerBars = Array.from(ui.equalizer.querySelectorAll("span"));
 
     function sliderToThreshold(sliderValue) {
       // Lower slider value means more sensitivity (lower threshold needed).
@@ -409,34 +386,16 @@
       return minThreshold + normalized * (maxThreshold - minThreshold);
     }
 
-    function formatTime(date) {
-      return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
-    }
-
-    function renderLog() {
-      ui.eventLog.innerHTML = "";
-      if (!eventLines.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = "No bark events yet.";
-        ui.eventLog.appendChild(empty);
-        return;
-      }
-      eventLines.forEach((line) => {
-        const row = document.createElement("div");
-        row.textContent = line;
-        ui.eventLog.appendChild(row);
+    function updateEqualizerFromVolume(rms) {
+      const clamped = Math.max(0, Math.min(rms * 7.5, 1));
+      equalizerBars.forEach((bar, index) => {
+        const variance = 0.62 + ((index + 1) / equalizerBars.length) * 0.48;
+        const wave = 0.84 + Math.sin(performance.now() * 0.008 + index) * 0.2;
+        const normalizedHeight = Math.max(0.08, Math.min(clamped * variance * wave, 1));
+        const px = 6 + normalizedHeight * 24;
+        bar.style.height = `${px.toFixed(1)}px`;
+        bar.style.opacity = `${(0.36 + normalizedHeight * 0.64).toFixed(2)}`;
       });
-    }
-
-    function addBarkLogEntry(nextState) {
-      const label = nextState ? "Playing" : "Paused";
-      const now = new Date();
-      eventLines.unshift(`🐾 Bark detected — ${formatTime(now)} → ${label}`);
-      if (eventLines.length > maxLogLines) {
-        eventLines.length = maxLogLines;
-      }
-      renderLog();
     }
 
     function setPlayingState(nextState) {
@@ -446,13 +405,12 @@
       ui.statusBadge.classList.toggle("status-paused", !isPlaying);
       ui.toggleBtn.classList.toggle("is-playing", isPlaying);
       ui.toggleBtn.classList.toggle("is-paused", !isPlaying);
+      document.body.classList.toggle("playing-theme", isPlaying);
+      document.body.classList.toggle("paused-theme", !isPlaying);
     }
 
-    function togglePlayback(source) {
+    function togglePlayback() {
       setPlayingState(!isPlaying);
-      if (source === "bark") {
-        addBarkLogEntry(isPlaying);
-      }
     }
 
     function computeRMS(byteArray) {
@@ -472,10 +430,11 @@
       const loop = () => {
         analyser.getByteTimeDomainData(dataArray);
         const rms = computeRMS(dataArray);
+        updateEqualizerFromVolume(rms);
         const now = performance.now();
         if (rms > threshold && now - lastDetection >= detectionCooldownMs) {
           lastDetection = now;
-          togglePlayback("bark");
+          togglePlayback();
         }
         detectionRaf = requestAnimationFrame(loop);
       };
@@ -487,6 +446,10 @@
         cancelAnimationFrame(detectionRaf);
         detectionRaf = null;
       }
+      equalizerBars.forEach((bar) => {
+        bar.style.height = "8px";
+        bar.style.opacity = "0.45";
+      });
       ui.equalizer.classList.remove("listening");
       ui.listeningLabel.textContent = "Microphone inactive";
     }
@@ -516,7 +479,7 @@
     }
 
     ui.enableMicBtn.addEventListener("click", enableBarkDetection);
-    ui.toggleBtn.addEventListener("click", () => togglePlayback("manual"));
+    ui.toggleBtn.addEventListener("click", () => togglePlayback());
     ui.sensitivity.addEventListener("input", (event) => {
       const value = Number(event.target.value);
       threshold = sliderToThreshold(value);
@@ -533,7 +496,6 @@
       }
     });
 
-    renderLog();
     setPlayingState(false);
   </script>
 </body>
