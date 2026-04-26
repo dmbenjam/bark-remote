@@ -21,6 +21,7 @@
       --playing: #0f8f45;
       --paused: #7e7e7e;
       --shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+      --stack-gap: clamp(0.8rem, 2.2vh, 1.15rem);
     }
 
     * {
@@ -29,64 +30,88 @@
 
     body {
       margin: 0;
-      min-height: 100vh;
-      background-color: var(--bg);
+      min-height: 100svh;
+      background: #000;
       color: var(--text);
       font-family: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
       display: grid;
       place-items: center;
-      padding: 1.2rem;
+      padding: clamp(0.8rem, 1.6vw, 1.2rem);
       transition: background-color 280ms ease;
+      overflow: hidden;
     }
 
-    body.paused-theme {
+    .app-screen.paused-theme {
       background:
         radial-gradient(circle at 18% 12%, rgba(204, 0, 0, 0.28), transparent 44%),
         radial-gradient(circle at 85% 90%, rgba(128, 20, 20, 0.18), transparent 50%),
         var(--bg-red);
     }
 
-    body.playing-theme {
+    .app-screen.playing-theme {
       background:
         radial-gradient(circle at 16% 14%, rgba(18, 151, 81, 0.27), transparent 44%),
         radial-gradient(circle at 84% 88%, rgba(15, 95, 56, 0.16), transparent 50%),
         var(--bg-green);
     }
 
+    .phone-shell {
+      width: min(100vw - 2rem, calc((100svh - 2rem) * (629.19 / 1227.48)));
+      height: min(100svh - 2rem, calc((100vw - 2rem) * (1227.48 / 629.19)));
+      max-height: 96svh;
+      aspect-ratio: 629.19 / 1227.48;
+      position: relative;
+      background: center / contain no-repeat url("mobile_outline.svg");
+      filter: drop-shadow(0 28px 50px rgba(0, 0, 0, 0.55));
+    }
+
+    .app-screen {
+      position: absolute;
+      left: 4.47%;
+      right: 4.47%;
+      top: 2.29%;
+      bottom: 2.29%;
+      border-radius: 38px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 14% 8%, rgba(175, 0, 0, 0.2), transparent 40%),
+        radial-gradient(circle at 86% 90%, rgba(80, 0, 0, 0.22), transparent 48%),
+        linear-gradient(180deg, #131313 0%, #090909 100%);
+      display: grid;
+      padding: clamp(0.9rem, 2.6vw, 1.35rem);
+    }
+
     .app {
-      width: min(100%, 460px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: var(--stack-gap);
+      overflow: hidden;
+      text-align: center;
     }
 
     .logo {
       margin: 0;
       font-family: "Bebas Neue", sans-serif;
       letter-spacing: 0.05em;
-      font-size: clamp(2.3rem, 6vw, 3.4rem);
+      font-size: clamp(2.4rem, 6.8vw, 3.4rem);
       line-height: 1;
       display: flex;
       align-items: center;
-      gap: 0.35rem;
       text-shadow: 0 0 24px rgba(204, 0, 0, 0.2);
     }
 
-    .logo .paw {
-      font-size: 0.5em;
-      transform: translateY(-0.08em);
-    }
-
     .remote-card {
-      width: 100%;
-      background: linear-gradient(180deg, #1a1a1a 0%, #111111 100%);
-      border: 1px solid var(--card-edge);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      padding: 1.3rem 1.2rem;
+      width: min(100%, 320px);
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
       display: grid;
-      gap: 1rem;
+      gap: var(--stack-gap);
       justify-items: center;
     }
 
@@ -135,6 +160,22 @@
         inset 0 2px 12px rgba(255, 255, 255, 0.06),
         inset 0 -8px 16px rgba(0, 0, 0, 0.55),
         0 0 0 2px rgba(204, 0, 0, 0.5),
+        0 16px 30px rgba(0, 0, 0, 0.58);
+    }
+
+    .power-button.is-playing {
+      box-shadow:
+        inset 0 2px 12px rgba(255, 255, 255, 0.04),
+        inset 0 -8px 16px rgba(0, 0, 0, 0.55),
+        0 0 0 2px rgba(15, 143, 69, 0.56),
+        0 10px 26px rgba(0, 0, 0, 0.5);
+    }
+
+    .power-button.is-playing:hover {
+      box-shadow:
+        inset 0 2px 12px rgba(255, 255, 255, 0.06),
+        inset 0 -8px 16px rgba(0, 0, 0, 0.55),
+        0 0 0 2px rgba(56, 214, 125, 0.72),
         0 16px 30px rgba(0, 0, 0, 0.58);
     }
 
@@ -189,15 +230,9 @@
     }
 
     .listening-row {
-      width: 100%;
+      width: auto;
       display: grid;
       justify-items: center;
-      gap: 0.45rem;
-    }
-
-    .listening-label {
-      font-size: 0.78rem;
-      color: var(--muted);
     }
 
     .equalizer {
@@ -224,10 +259,46 @@
     }
 
     .slider-group {
-      width: min(100%, 320px);
+      width: 100%;
       display: grid;
-      gap: 0.45rem;
-      margin-top: 0.1rem;
+      gap: 0.4rem;
+    }
+
+    .slider-control-row {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      width: 100%;
+    }
+
+    .mute-button {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(204, 0, 0, 0.45);
+      background: rgba(23, 23, 23, 0.85);
+      color: #f4f4f4;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: background-color 160ms ease, border-color 160ms ease, transform 130ms ease;
+    }
+
+    .mute-button:hover {
+      border-color: rgba(204, 0, 0, 0.72);
+      background: rgba(38, 38, 38, 0.95);
+    }
+
+    .mute-button:active {
+      transform: scale(0.95);
+    }
+
+    .mute-button.is-muted {
+      border-color: rgba(126, 126, 126, 0.65);
+      background: rgba(80, 80, 80, 0.3);
+      color: #dddddd;
     }
 
     .slider-group label {
@@ -238,50 +309,10 @@
       gap: 0.8rem;
     }
 
-    input[type="range"] {
-      width: 100%;
+    .slider-control-row input[type="range"] {
+      flex: 1;
       accent-color: var(--accent);
       cursor: pointer;
-    }
-
-    .mic-gate {
-      width: 100%;
-      background: rgba(21, 21, 21, 0.95);
-      border: 1px solid var(--card-edge);
-      border-radius: 24px;
-      padding: 1.6rem 1.2rem;
-      text-align: center;
-      display: grid;
-      gap: 0.9rem;
-      box-shadow: var(--shadow);
-    }
-
-    .mic-gate p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-      line-height: 1.45;
-    }
-
-    .enable-btn {
-      justify-self: center;
-      background: var(--accent);
-      color: #fff;
-      border: 1px solid transparent;
-      border-radius: 999px;
-      font-weight: 700;
-      padding: 0.7rem 1.2rem;
-      cursor: pointer;
-      transition: transform 140ms ease, background-color 180ms ease, box-shadow 180ms ease;
-      box-shadow: 0 8px 18px rgba(204, 0, 0, 0.38);
-    }
-
-    .enable-btn:hover {
-      background: #e30000;
-    }
-
-    .enable-btn:active {
-      transform: scale(0.98);
     }
 
     .footnote,
@@ -289,9 +320,9 @@
       margin: 0;
       text-align: center;
       color: var(--muted);
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       line-height: 1.4;
-      max-width: 420px;
+      max-width: 95%;
     }
 
     .legal {
@@ -303,68 +334,78 @@
       display: none;
     }
 
-    @media (max-width: 480px) {
-      .remote-card,
-      .mic-gate {
-        border-radius: 20px;
-        padding: 1.1rem 1rem;
+    @media (max-width: 760px) {
+      body {
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .phone-shell {
+        width: 100vw;
+        height: 100svh;
+        max-height: none;
+        background: none;
+        filter: none;
+      }
+
+      .app-screen {
+        position: static;
+        inset: auto;
+        border-radius: 0;
+        padding: max(0.9rem, env(safe-area-inset-top)) 1rem max(0.9rem, env(safe-area-inset-bottom));
       }
     }
+
   </style>
 </head>
 <body>
-  <main class="app">
-    <h1 class="logo">FETCHFLIX <span class="paw" aria-hidden="true">🐾</span></h1>
-    <p class="footnote">
-      FetchFlix listens for your dog's bark using your device microphone. Bark to pause. Bark again to play.
-    </p>
+  <div class="phone-shell">
+    <main class="app-screen" id="appScreen">
+      <section class="app">
+        <h1 class="logo">FETCHFLIX</h1>
+        <p class="footnote">
+          FetchFlix listens for your dog's bark using your device microphone. Bark to pause. Bark again to play.
+        </p>
 
-    <section class="mic-gate" id="micGate">
-      <p>Enable microphone access to let FetchFlix detect barks and toggle play/pause.</p>
-      <button class="enable-btn" id="enableMicBtn" type="button">🎙️ Enable Bark Detection</button>
-      <p id="micError" class="hidden" aria-live="polite"></p>
-    </section>
+        <section class="remote-card" id="remoteCard" aria-live="polite">
+          <div class="status-badge status-paused" id="statusBadge">⏸ Paused</div>
 
-    <section class="remote-card hidden" id="remoteCard" aria-live="polite">
-      <div class="status-badge status-paused" id="statusBadge">⏸ Paused</div>
+          <button class="power-button is-paused" id="toggleBtn" type="button" aria-label="Toggle play/pause">
+            <span class="icon-wrapper">
+              <span class="play-icon" aria-hidden="true"></span>
+              <span class="pause-icon" aria-hidden="true"><span></span><span></span></span>
+            </span>
+          </button>
 
-      <button class="power-button is-paused" id="toggleBtn" type="button" aria-label="Toggle play/pause">
-        <span class="icon-wrapper">
-          <span class="play-icon" aria-hidden="true"></span>
-          <span class="pause-icon" aria-hidden="true"><span></span><span></span></span>
-        </span>
-      </button>
+          <div class="listening-row">
+            <div class="equalizer" id="equalizer" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
 
-      <div class="listening-row">
-        <div class="listening-label" id="listeningLabel">Microphone inactive</div>
-        <div class="equalizer" id="equalizer" aria-hidden="true">
-          <span></span><span></span><span></span><span></span><span></span><span></span>
-        </div>
-      </div>
+          <div class="slider-group">
+            <label for="sensitivity">Bark Sensitivity <span id="sensitivityValue">50%</span></label>
+            <div class="slider-control-row">
+              <button class="mute-button" id="muteBtn" type="button" aria-label="Mute bark detection" aria-pressed="false">🔊</button>
+              <input id="sensitivity" type="range" min="0" max="100" value="50">
+            </div>
+          </div>
+        </section>
 
-      <div class="slider-group">
-        <label for="sensitivity">Bark Sensitivity <span id="sensitivityValue">50%</span></label>
-        <input id="sensitivity" type="range" min="1" max="100" value="50">
-      </div>
-    </section>
-
-    <p class="legal">
-      MVP demo — bark detection uses volume threshold via Web Audio API. No audio is recorded or transmitted.
-    </p>
-  </main>
+      </section>
+    </main>
+  </div>
 
   <script>
     const ui = {
-      micGate: document.getElementById("micGate"),
-      micError: document.getElementById("micError"),
-      enableMicBtn: document.getElementById("enableMicBtn"),
       remoteCard: document.getElementById("remoteCard"),
       statusBadge: document.getElementById("statusBadge"),
       toggleBtn: document.getElementById("toggleBtn"),
+      muteBtn: document.getElementById("muteBtn"),
       equalizer: document.getElementById("equalizer"),
-      listeningLabel: document.getElementById("listeningLabel"),
       sensitivity: document.getElementById("sensitivity"),
-      sensitivityValue: document.getElementById("sensitivityValue")
+      sensitivityValue: document.getElementById("sensitivityValue"),
+      appScreen: document.getElementById("appScreen")
     };
 
     let isPlaying = false;
@@ -374,27 +415,44 @@
     let stream = null;
     let detectionRaf = null;
     let lastDetection = 0;
+    let isMuted = false;
+    let lastActiveSensitivity = Number(ui.sensitivity.value);
     let threshold = sliderToThreshold(Number(ui.sensitivity.value));
     const detectionCooldownMs = 800;
     const equalizerBars = Array.from(ui.equalizer.querySelectorAll("span"));
 
     function sliderToThreshold(sliderValue) {
+      if (sliderValue <= 0) {
+        // A value of 0 should fully disable bark-trigger detection.
+        return Number.POSITIVE_INFINITY;
+      }
       // Lower slider value means more sensitivity (lower threshold needed).
       const minThreshold = 0.035;
       const maxThreshold = 0.23;
-      const normalized = (sliderValue - 1) / 99;
+      const clampedValue = Math.max(1, Math.min(100, sliderValue));
+      const normalized = (clampedValue - 1) / 99;
       return minThreshold + normalized * (maxThreshold - minThreshold);
     }
 
-    function updateEqualizerFromVolume(rms) {
-      const clamped = Math.max(0, Math.min(rms * 7.5, 1));
+    function setSensitivityValue(value) {
+      ui.sensitivity.value = String(value);
+      threshold = sliderToThreshold(value);
+      ui.sensitivityValue.textContent = `${value}%`;
+    }
+
+    function updateEqualizerFromDetectionLevel(rms) {
+      let activation = 0;
+      if (Number.isFinite(threshold) && threshold > 0) {
+        // Scale motion by proximity to trigger threshold.
+        activation = Math.max(0, Math.min(rms / threshold, 1));
+      }
       equalizerBars.forEach((bar, index) => {
         const variance = 0.62 + ((index + 1) / equalizerBars.length) * 0.48;
         const wave = 0.84 + Math.sin(performance.now() * 0.008 + index) * 0.2;
-        const normalizedHeight = Math.max(0.08, Math.min(clamped * variance * wave, 1));
+        const normalizedHeight = Math.max(0.08, Math.min(activation * variance * wave, 1));
         const px = 6 + normalizedHeight * 24;
         bar.style.height = `${px.toFixed(1)}px`;
-        bar.style.opacity = `${(0.36 + normalizedHeight * 0.64).toFixed(2)}`;
+        bar.style.opacity = `${(0.22 + normalizedHeight * 0.74).toFixed(2)}`;
       });
     }
 
@@ -405,12 +463,30 @@
       ui.statusBadge.classList.toggle("status-paused", !isPlaying);
       ui.toggleBtn.classList.toggle("is-playing", isPlaying);
       ui.toggleBtn.classList.toggle("is-paused", !isPlaying);
-      document.body.classList.toggle("playing-theme", isPlaying);
-      document.body.classList.toggle("paused-theme", !isPlaying);
+      ui.appScreen.classList.toggle("playing-theme", isPlaying);
+      ui.appScreen.classList.toggle("paused-theme", !isPlaying);
     }
 
     function togglePlayback() {
       setPlayingState(!isPlaying);
+    }
+
+    function setMutedState(nextState) {
+      isMuted = nextState;
+      ui.muteBtn.classList.toggle("is-muted", isMuted);
+      ui.muteBtn.setAttribute("aria-pressed", String(isMuted));
+      ui.muteBtn.setAttribute("aria-label", isMuted ? "Unmute bark detection" : "Mute bark detection");
+      ui.muteBtn.textContent = isMuted ? "🔇" : "🔊";
+      if (isMuted) {
+        const current = Number(ui.sensitivity.value);
+        if (current > 0) {
+          lastActiveSensitivity = current;
+        }
+        setSensitivityValue(0);
+      } else {
+        const restoreValue = Math.max(1, Math.min(100, lastActiveSensitivity || 50));
+        setSensitivityValue(restoreValue);
+      }
     }
 
     function computeRMS(byteArray) {
@@ -425,14 +501,13 @@
     function beginDetectionLoop() {
       if (!analyser || !dataArray) return;
       ui.equalizer.classList.add("listening");
-      ui.listeningLabel.textContent = "Mic active and listening";
 
       const loop = () => {
         analyser.getByteTimeDomainData(dataArray);
         const rms = computeRMS(dataArray);
-        updateEqualizerFromVolume(rms);
+        updateEqualizerFromDetectionLevel(rms);
         const now = performance.now();
-        if (rms > threshold && now - lastDetection >= detectionCooldownMs) {
+        if (!isMuted && rms > threshold && now - lastDetection >= detectionCooldownMs) {
           lastDetection = now;
           togglePlayback();
         }
@@ -451,13 +526,9 @@
         bar.style.opacity = "0.45";
       });
       ui.equalizer.classList.remove("listening");
-      ui.listeningLabel.textContent = "Microphone inactive";
     }
 
     async function enableBarkDetection() {
-      ui.enableMicBtn.disabled = true;
-      ui.enableMicBtn.textContent = "Enabling...";
-      ui.micError.classList.add("hidden");
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -467,21 +538,21 @@
         analyser.smoothingTimeConstant = 0.2;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
         source.connect(analyser);
-        ui.micGate.classList.add("hidden");
-        ui.remoteCard.classList.remove("hidden");
         beginDetectionLoop();
       } catch (error) {
-        ui.enableMicBtn.disabled = false;
-        ui.enableMicBtn.textContent = "🎙️ Enable Bark Detection";
-        ui.micError.classList.remove("hidden");
-        ui.micError.textContent = "Microphone access failed. Please allow mic access and try again.";
+        console.warn("Microphone access failed:", error);
       }
     }
 
-    ui.enableMicBtn.addEventListener("click", enableBarkDetection);
     ui.toggleBtn.addEventListener("click", () => togglePlayback());
+    ui.muteBtn.addEventListener("click", () => {
+      setMutedState(!isMuted);
+    });
     ui.sensitivity.addEventListener("input", (event) => {
       const value = Number(event.target.value);
+      if (value > 0) {
+        lastActiveSensitivity = value;
+      }
       threshold = sliderToThreshold(value);
       ui.sensitivityValue.textContent = `${value}%`;
     });
@@ -497,6 +568,8 @@
     });
 
     setPlayingState(false);
+    setMutedState(false);
+    enableBarkDetection();
   </script>
 </body>
 </html>
